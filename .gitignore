@@ -1,3 +1,5 @@
 .env
 .vscode
 mandrill_check
+example*.go
+response.json

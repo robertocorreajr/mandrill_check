@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -25,6 +29,8 @@ type Payload struct {
 
 func Search(args []string) {
 
+	url := URL + "messages/search.json"
+
 	days := -7
 	dateFrom := (time.Now().AddDate(0, 0, days)).Format("2006-01-02")
 	dateTo := (time.Now()).Format("2006-01-02")
@@ -40,52 +46,45 @@ func Search(args []string) {
 		action := args[3]
 		switch action {
 		case "limit", "l", "-l", "--l":
-			limit, _ = strconv.Atoi(args[3])
+
+			var err error
+			limit, err = strconv.Atoi(args[4])
+
+			if err != nil {
+				fmt.Println("First input parameter must be integer")
+				os.Exit(1)
+			}
+
 		default:
 			limit = 100
 		}
 	}
 
-	var payload Payload
-
-	payload.Key = key           // ou os.Getenv("KEY")
-	payload.Query = email       // ou args[2]
-	payload.DateFrom = dateFrom // Data inicial da busca
-	payload.DateTo = dateTo     // Data final da busca
-	payload.Limit = limit       // limit de resultados
+	payload := &Payload{
+		Key:      key,
+		Query:    email,
+		DateFrom: dateFrom,
+		DateTo:   dateTo,
+		Limit:    limit,
+	}
 
 	fmt.Println(payload)
-	/*
-		package main
 
-		func fetchResponse(url string) string{
-			resp, _ := http.Get(url)
-			defer resp.Body.Close()
-			body, _ := ioutil.ReadAll(resp.Body)
-			return string(body)
-		}
+	payloadBuf := new(bytes.Buffer)
+	json.NewEncoder(payloadBuf).Encode(payload)
+	req, _ := http.NewRequest("POST", url, payloadBuf)
 
-		func main() {
-			resp := fetchResponse("http://someurl.com")
-			fmt.Println(resp)
-		}
-	*/
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	/*
-		func createBook(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
+	defer resp.Body.Close()
 
-			mu.Lock()
-			var book Book
-			_ = json.NewDecoder(r.Body).Decode(&book)
-
-			book.ID = strconv.Itoa(newId)
-			books = append(books, book)
-			newId++
-			json.NewEncoder(w).Encode(book)
-			mu.Unlock()
-		}
-	*/
+	fmt.Println("response Status:", resp.Status)
+	// Print the body to the stdout
+	io.Copy(os.Stdout, resp.Body)
 
 }
 
