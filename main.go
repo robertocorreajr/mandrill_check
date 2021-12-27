@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -12,7 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/joho/godotenv"
+	"github.com/rodaine/table"
 )
 
 const URL = "https://mandrillapp.com/api/1.0/"
@@ -60,7 +62,7 @@ func Search(args []string) {
 		}
 	}
 
-	payload := &Payload{
+	payload := Payload{
 		Key:      key,
 		Query:    email,
 		DateFrom: dateFrom,
@@ -73,6 +75,7 @@ func Search(args []string) {
 	payloadBuf := new(bytes.Buffer)
 	json.NewEncoder(payloadBuf).Encode(payload)
 	req, _ := http.NewRequest("POST", url, payloadBuf)
+	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -83,8 +86,63 @@ func Search(args []string) {
 	defer resp.Body.Close()
 
 	fmt.Println("response Status:", resp.Status)
+
+	if err != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", err)
+	} else {
+		data, _ := ioutil.ReadAll(resp.Body)
+		// fmt.Println(string(data))
+
+		type Return struct {
+			ID      string `json:"_id"`
+			Subject string `json:"subject"`
+			Email   string `json:"email"`
+			State   string `json:"state"`
+			Opens   int    `json:"opens"`
+			Clicks  int    `json:"clicks"`
+			Ts      int64  `json:"ts"`
+		}
+
+		var emails = make([]Return, 0)
+		err = json.Unmarshal(data, &emails)
+		if err != nil {
+			fmt.Printf("The HTTP request failed with error %s\n", err)
+			os.Exit(1)
+		}
+		// fmt.Println("#####################################################")
+		// Start table structure
+		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+		columnFmt := color.New(color.FgYellow).SprintfFunc()
+		tbl := table.New("ID", "Subject", "Email To", "State", "Opens/Clicks", "Timestamp")
+		tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+		// Finish table structure
+
+		// for i := range emails {
+		// 	fmt.Println(emails[i].ID, emails[i].Subject, emails[i].Email, emails[i].State, emails[i].Opens, emails[i].Clicks, time.Unix(emails[i].Ts, 0))
+		// }
+
+		for i := range emails {
+			openClicks := strconv.Itoa(emails[i].Opens) + "/" + strconv.Itoa(emails[i].Clicks)
+			timeStamp := time.Unix(emails[i].Ts, 0)
+			tbl.AddRow(emails[i].ID, emails[i].Subject, emails[i].Email, emails[i].State, openClicks, timeStamp.Format("2006-01-02 15:03:04"))
+		}
+
+		tbl.Print()
+
+		// fmt.Println(emails)
+	}
 	// Print the body to the stdout
-	io.Copy(os.Stdout, resp.Body)
+	// io.Copy(os.Stdout, resp.Body)
+
+	// jsonData := make([]Payload, 0)
+	// jsonValue, _ := json.Marshal(jsonData)
+	// resp, err = http.Post(url, "application/json", bytes.NewBuffer(jsonValue))
+	// if err != nil {
+	// 	fmt.Printf("The HTTP request failed with error %s\n", err)
+	// } else {
+	// 	data, _ := ioutil.ReadAll(resp.Body)
+	// 	fmt.Println(string(data))
+	// }
 
 }
 
@@ -95,7 +153,7 @@ func Setup() {
 func main() {
 
 	// Realizar a leitura do arquivo .env e em caso de erro encerra a aplicação...
-	// @TODO: Adicionar help para criar arquivo na função setup do qual vai criar o arquivo .env e gravar a key lá
+	// TODO: Adicionar help para criar arquivo na função setup do qual vai criar o arquivo .env e gravar a key lá
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -106,11 +164,11 @@ func main() {
 	// Verificar a quantidade de argumentos, e caso seja menor que 2
 	if len(os.Args) < 2 {
 		fmt.Println("list or count subcommand is required")
-		os.Exit(1) // @TODO: Retirar dúvida com o Rodrigo, se é necessário encerrar com código 1 e se não poderia encerrar com 0, já que o erro foi evitado.
+		os.Exit(1) // TODO: Retirar dúvida com o Rodrigo, se é necessário encerrar com código 1 e se não poderia encerrar com 0, já que o erro foi evitado.
 	}
 
 	args := os.Args
-	action := strings.ToLower(args[1]) // @TODO: Verificar a real necessidade de transformar as ações em letras minuculas por default.
+	action := strings.ToLower(args[1]) // TODO: Verificar a real necessidade de transformar as ações em letras minuculas por default.
 
 	switch action {
 	case "search", "s", "-s", "--s":
