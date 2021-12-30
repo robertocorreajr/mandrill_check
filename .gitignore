@@ -1,4 +1,4 @@
-.env
+.env*
 .vscode
 mandrill_check
 example*.go

@@ -40,7 +40,7 @@ func Search(args []string) {
 	fmt.Println("Date To:  ", dateTo)
 
 	key := os.Getenv("KEY")
-	email := os.Getenv("EMAIL_TEST") // args[2]
+	email := args[2] // os.Getenv("EMAIL_TEST") // args[2]
 
 	var limit int
 
@@ -146,7 +146,32 @@ func Search(args []string) {
 
 }
 
-func Setup() {
+func Setup(args []string) {
+	var key string = args[2]
+	key = "KEY=\"" + key + "\""
+	var file = ".env2" // TODO: Alterar para .env antes de colocar em produção. Acrescentar a criação de um diretório no home do usuário ~/.mandrilc/.env
+	var i = 0
+
+	for i != 3 { // TODO: Copiar o binário para pasta /usr/bin e deletar do local original ou informar que pode ser apagado sei lá...
+		f, err := os.Create(file)
+		if err != nil {
+			fmt.Println(err.Error())
+			panic(err)
+		}
+
+		defer f.Close()
+
+		_, err = f.WriteString(key)
+		if err != nil {
+			fmt.Println(err.Error())
+			panic(err)
+		}
+
+		fmt.Print(".")
+		time.Sleep(2 * time.Second)
+		i++
+	}
+	fmt.Println("\nSetup finalizado com sucesso!!!")
 
 }
 
@@ -186,6 +211,8 @@ func main() {
 
 	case "setup":
 		fmt.Println("Iniciando Setup...")
+		Setup(args)
+		// return key
 
 	default:
 		fmt.Println("Exibir Help")
