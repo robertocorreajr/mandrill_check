@@ -1,5 +1,5 @@
-.env
+.env*
 .vscode
-mandrill_check
+mandrill_check*
 example*.go
 response.json
