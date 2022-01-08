@@ -131,7 +131,11 @@ func Info(args []string) {
 	}
 
 	text := xurls.Strict().FindAllString(returnContent.Text, -1)
-	returnContent.Text = strings.Trim(text[0], " ")
+	if returnContent.Subject != "Redefina sua senha do Arquivei" {
+		returnContent.Text = strings.Trim(text[1], " ")
+	} else {
+		returnContent.Text = strings.Trim(text[0], " ")
+	}
 
 	// Start table structure
 	tbl := table.New("ID", "Subject", "Email To", "Timestamp")
