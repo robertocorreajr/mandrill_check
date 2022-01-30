@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"mandrill_check/entity"
 	"net/http"
 	"os"
 	"strconv"
@@ -45,6 +46,8 @@ func Search(args []string) {
 			limit = 100
 		}
 	}
+
+	payload := entity.NewPayload()
 
 	payload.Key = key
 	payload.Query = email
@@ -101,6 +104,8 @@ func Info(args []string) {
 	key := os.Getenv("KEY")
 	id := args[2]
 
+	payload := entity.NewPayload()
+
 	payload.Key = key
 	payload.ID = id
 
@@ -112,7 +117,6 @@ func Info(args []string) {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-
 	if err != nil {
 		fmt.Printf("The HTTP request failed with error %s\n", err)
 	}
@@ -152,6 +156,30 @@ func Info(args []string) {
 
 	fmt.Println(headerFmt("Link                                                                                                             "))
 	fmt.Println(columnFmt(strings.Trim(returnContent.Text, " ")))
+}
+
+func Remove(args []string) {
+	key := os.Getenv("KEY")
+
+	payload := entity.NewPayload()
+	payload.Key = key
+	payload.Email = args[2]
+
+	payloadBuf := new(bytes.Buffer)
+
+	json.NewEncoder(payloadBuf).Encode(payload)
+	req, _ := http.NewRequest("POST", urlContentRemove, payloadBuf)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", err)
+	}
+	defer resp.Body.Close()
+
+	fmt.Println(" response Status:", string("\033[32m"), resp.Status)
+
 }
 
 func Setup(args []string) {
@@ -212,6 +240,10 @@ func main() {
 
 	case "key", "k", "-k", "--k":
 		fmt.Println("Escolhido Key")
+
+	case "remove", "r", "-r", "--r":
+		fmt.Println("Delete e-mail from denylist")
+		Remove(args)
 
 	case "setup":
 		fmt.Println("Iniciando Setup...")

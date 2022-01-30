@@ -3,6 +3,7 @@ package main
 const (
 	urlContentSearch string = "https://mandrillapp.com/api/1.0/messages/search.json"
 	urlContentInfo   string = "https://mandrillapp.com/api/1.0/messages/content.json"
+	urlContentRemove string = "https://mandrillapp.com/api/1.0/rejects/delete"
 )
 
 type Payload struct {
@@ -14,7 +15,7 @@ type Payload struct {
 	Limit    int    `json:"limit"`
 }
 
-var payload Payload
+// var payload Payload
 
 type returnContentSearch struct {
 	ID      string `json:"_id"`
