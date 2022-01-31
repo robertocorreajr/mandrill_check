@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"mandrill_check/cmd"
 	"mandrill_check/entity"
 	"net/http"
 	"os"
@@ -254,5 +255,8 @@ func main() {
 		fmt.Println("Exibir Help")
 		os.Exit(1)
 	}
+
+	//Cobra comands
+	cmd.Execute()
 
 }
